@@ -1,7 +1,7 @@
 # A Simple demo for openshift v3
 
 #About
-Some simple scripts that show how to set up and use Red Hat JBoss A-MQ with Red Hat Openshift Container Platform.
+Some simple scripts that show how to set up and use the Red Hat Openshift Container Platform.
 
 Important notes: 
 - For Red Hat PS MW SAs, this has been validated against _rhsademo_ and this is the recommended platform.

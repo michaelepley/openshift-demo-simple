@@ -4,8 +4,8 @@
 
 . ./config.sh
 
-echo "	--> Attempting to locate original pod"
-OPENSHIFT_PHP_POD_ORIGINAL=`oc get pods | grep Running | grep '^php-'$(oc get dc/php --template={{.status.latestVersion}}) | sed '1d' | head -n 1 | awk '{printf $1}'` || { echo "FAILED" && exit 1; }
+echo "Scaling the frontend"
+. ./setup-login.sh
 echo "	--> Find the application replication controller"
 OPENSHIFT_APPLICATION_REPLICATION_CONTROLLER=`oc get rc -l app=${OPENSHIFT_APPLICATION_NAME} | sed '1d' | awk '$2 > 0 { printf $1 }'` || { echo "FAILED" && exit 1; }
 echo "		--> Found ${OPENSHIFT_APPLICATION_REPLICATION_CONTROLLER}"
@@ -31,6 +31,8 @@ for COUNT in {1..20} ; do echo -n "." && sleep 1s; done
 echo "		--> Found " $(oc get pods | grep '^php' | wc -l) "pods are running"
 echo "		--> press enter to continue" && read
 echo "	--> Forcefully destroy the original pod"
+echo "		--> Attempting to locate original pod"
+OPENSHIFT_PHP_POD_ORIGINAL=`oc get pods | grep Running | grep '^php-'$(oc get dc/php --template={{.status.latestVersion}}) | sed '1d' | head -n 1 | awk '{printf $1}'` || { echo "FAILED" && exit 1; }
 oc delete pod ${OPENSHIFT_PHP_POD_ORIGINAL}
 echo "		--> press enter to continue" && read
 echo "	--> Set up autoscaling"

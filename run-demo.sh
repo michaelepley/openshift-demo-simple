@@ -1,6 +1,9 @@
 #!/bin/bash
 
 echo "Running simple openshift demo"
+
+echo "	--> Logging into openshift"
+. ./setup-login.sh
 echo "	--> Setting up php frontend application"
 . ./setup-php.sh
 read

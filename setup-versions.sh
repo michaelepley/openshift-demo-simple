@@ -4,15 +4,11 @@
 
 . ./config.sh
 
-echo "Setup sample PHP + MySQL demo application: connect frontend and backend"
-echo "	--> Log into openshift"
-oc login ${OPENSHIFT_PRIMARY_MASTER}:${OPENSHIFT_PRIMARY_MASTER_PORT_HTTPS} --username=${OPENSHIFT_PRIMARY_USER} --password=${OPENSHIFT_PRIMARY_USER_PASSWORD} --insecure-skip-tls-verify=false || { echo "FAILED: could not login to openshift" && exit 1; }
-echo "	--> Switch to project"
-oc project ${OPENSHIFT_PRIMARY_PROJECT} || { echo "FAILED: Could not use indicated project" && exit 1; }
-
+echo "Setup sample PHP + MySQL demo application: add some additional versions"
+. ./setup-login.sh
+firefox php-${OPENSHIFT_PRIMARY_PROJECT}.${OPENSHIFT_PRIMARY_APPS}
 echo "	--> set a readiness probe for the frontend"
 oc set probe dc/php --readiness --get-url=http://:8080/
-
 echo "		--> NOTE: readiness probe now contaminates our frontend with extraneous results"
 echo "		--> press enter to continue" && read
 echo "	--> Roll back one version to remove the readiness probe"
@@ -42,9 +38,18 @@ echo "	--> create new a/b testing endpoint"
 oc patch route/php -p '{"spec" : { "to" : { "name" : "php"} } }'
 #--session-affinity=None 
 oc get route visitorsab || oc expose service php-mepley --name visitorsab -l app=${OPENSHIFT_APPLICATION_NAME} --hostname="visitorsab.${OPENSHIFT_PRIMARY_APPS}"
-oc set route-backends visitorsab php=50 php-mepley=50
-for COUNT in {1..20} ; do curl -L -s http://visitorsab.${OPENSHIFT_PRIMARY_APPS} | grep -o "Database is available" || echo "No Color"; done
 firefox visitorsab.${OPENSHIFT_PRIMARY_APPS}
-
+echo "		--> Set the AB endpoint to allow a small amount of traffic to be routed to the 'new' application"
+oc set route-backends visitorsab php=90 php-mepley=10
+for COUNT in {1..20} ; do curl -L -s http://visitorsab.${OPENSHIFT_PRIMARY_APPS} | grep -o "bgcolor" || echo "nocolor"; done
+echo "			--> notice the small amount of bgcolor application hits" && read
+echo "		--> Set the AB endpoint to route traffic equally between applications"
+oc set route-backends visitorsab php=50 php-mepley=50
+for COUNT in {1..20} ; do curl -L -s http://visitorsab.${OPENSHIFT_PRIMARY_APPS} | grep -o "bgcolor" || echo "nocolor"; done
+echo "			--> notice the equal number of hits for bgcolor and nocolor" && read
+echo "		--> Set the AB endpoint to route traffic  mostly to the new application"
+oc set route-backends visitorsab php=10 php-mepley=90
+for COUNT in {1..20} ; do curl -L -s http://visitorsab.${OPENSHIFT_PRIMARY_APPS} | grep -o "bgcolor" || echo "nocolor"; done
+echo "			--> notice almost all hits are to bgcolor not nocolor"
 
 echo "Done."

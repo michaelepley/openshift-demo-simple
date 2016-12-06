@@ -3,6 +3,8 @@
 . ./config.sh
 
 echo "Setup sample PHP + MySQL demo application: connect frontend and backend"
+
+echo "	--> only intended to be run by a cluster admin -- remove this line and rerun if you really intend to do this" && exit 1;
 . ./setup-login.sh
 
 echo "	--> getting limits"

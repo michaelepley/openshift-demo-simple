@@ -12,6 +12,13 @@ else
 	case ${OPENSHIFT_PRIMARY_AUTH_METHOD_DEFAULT} in
 		${OPENSHIFT_PRIMARY_AUTH_METHODS[0]} )
 			echo "	--> Configuring for ${OPENSHIFT_PRIMARY_AUTH_METHODS[0]} authentication"
+			if [[ -v OPENSHIFT_RHSADEMO_USER_PASSWORD_DEFAULT ]] ; then
+				echo "--> Using RHSADEMO password for openshift"
+				OPENSHIFT_PRIMARY_USER_PASSWORD_DEFAULT=$OPENSHIFT_RHSADEMO_USER_PASSWORD_DEFAULT
+			else
+				[[ ! -v OPENSHIFT_PRIMARY_USER_PASSWORD_DEFAULT ]] && echo "Please set OPENSHIFT_PRIMARY_USER_PASSWORD_DEFAULT to your openshift password" && exit 1
+			fi
+			OPENSHIFT_PRIMARY_CEREDENTIALS_CLI='--username='${OPENSHIFT_PRIMARY_USER_DEFAULT}' --password='${OPENSHIFT_PRIMARY_USER_PASSWORD_DEFAULT}
 		;;
 		${OPENSHIFT_PRIMARY_AUTH_METHODS[1]} )
 			echo "	--> Configuring for ${OPENSHIFT_PRIMARY_AUTH_METHODS[1]} authentication"
@@ -19,7 +26,8 @@ else
 		;;
 		${OPENSHIFT_PRIMARY_AUTH_METHODS[2]} )
 			echo "	--> Configuring for ${OPENSHIFT_PRIMARY_AUTH_METHODS[2]} authentication"
-			{ [[ -v OPENSHIFT_PRIMARY_USER_TOKEN ]] || [[ -z ${OPENSHIFT_PRIMARY_USER_TOKEN} ]] ; } && { echo "	--> attempt to obtain the oauth authorization token automatically" && OPENSHIFT_PRIMARY_USER_TOKEN=`curl -sS -u ${OPENSHIFT_PRIMARY_USER}:${OPENSHIFT_PRIMARY_USER_PASSWORD} -kv -H "X-CSRF-Token: xxx" "https://${OPENSHIFT_PRIMARY_PROXY_AUTH}/challenging-proxy/oauth/authorize?client_id=openshift-challenging-client&response_type=token" 2>&1 | sed -e '\|access_token|!d;s/.*access_token=\([-_[:alnum:]]*\).*/\1/'` && echo "		-> token is ${OPENSHIFT_PRIMARY_USER_TOKEN}" ; }  
+						
+			{ [[ -v OPENSHIFT_PRIMARY_USER_TOKEN ]] || [[ -z ${OPENSHIFT_PRIMARY_USER_TOKEN} ]] ; } && { echo "	--> attempt to obtain the oauth authorization token automatically" && OPENSHIFT_PRIMARY_USER_TOKEN=$(curl -sS -u "${OPENSHIFT_PRIMARY_USER}":"${OPENSHIFT_PRIMARY_USER_PASSWORD}" -kv -H "X-CSRF-Token:xxx" "https://${OPENSHIFT_PRIMARY_PROXY_AUTH}/challenging-proxy/oauth/authorize?client_id=openshift-challenging-client&response_type=token" 2>&1 | sed -e '\|access_token|!d;s/.*access_token=\([-_[:alnum:]]*\).*/\1/') && echo "		-> token is ${OPENSHIFT_PRIMARY_USER_TOKEN}" ; }  
 			{ [[ -v OPENSHIFT_PRIMARY_USER_TOKEN ]] && [[ -n ${OPENSHIFT_PRIMARY_USER_TOKEN} ]] ; } || { echo "Please set OPENSHIFT_PRIMARY_USER_TOKEN to your openshift login token" && exit 1; }
 			OPENSHIFT_PRIMARY_CEREDENTIALS_CLI_DEFAULT="--token ${OPENSHIFT_PRIMARY_USER_TOKEN}"
 			OPENSHIFT_PRIMARY_CEREDENTIALS_CLI=${OPENSHIFT_PRIMARY_CEREDENTIALS_CLI_DEFAULT}

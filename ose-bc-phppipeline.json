@@ -1,0 +1,25 @@
+{
+	"apiVersion": "v1",
+	"kind": "BuildConfig",
+	"metadata": {
+		"name": "phppipeline",
+		"labels": {
+			"app": "php",
+			"part": "frontend"
+		},
+		"annotations": {
+			"pipeline.alpha.openshift.io/uses": "[{\"name\": \"php\", \"namespace\": \"\", \"kind\": \"DeploymentConfig\"}]"
+		}
+	},
+	"spec": {
+		"runPolicy": "Serial",
+		"strategy": {
+			"type": "Source",
+			"jenkinsPipelineStrategy": {
+				"jenkinsfile": "node('\''maven'\'') {\n  stage '\''build'\''\n  openshiftBuild(buildConfig: '\''php'\'', showBuildLogs: '\''true'\'')\nstage '\''deploy'\''\n  openshiftDeploy(deploymentConfig: '\''php'\'')\n  openshiftScale(deploymentConfig: '\''php'\'',replicaCount: '\''2'\'')\n}"
+			}
+		},
+		"output": {},
+		"resources": {}
+	}
+}

@@ -16,7 +16,7 @@
 		"strategy": {
 			"type": "Source",
 			"jenkinsPipelineStrategy": {
-				"jenkinsfile": "node('maven') { stage 'build'  openshiftBuild(buildConfig: 'php', showBuildLogs: 'true')stage 'deploy'  openshiftDeploy(deploymentConfig: 'php')  openshiftScale(deploymentConfig: 'php', replicaCount: '2') }"
+				"jenkinsfile": "node('maven') {\n  stage 'build'\n  openshiftBuild(buildConfig: 'php', showBuildLogs: 'true')\n  stage 'deploy'\n  openshiftDeploy(deploymentConfig: 'php')\n  openshiftScale(deploymentConfig: 'php', replicaCount: '2')\n}"
 			}
 		},
 		"output": {},

@@ -19,5 +19,9 @@ read
 echo "	--> Deploy some different versions of the application"
 . ./setup-versions.sh
 read
+echo "	--> Enhance the build process of the application"
+. ./setup-builds.sh
+read
+
 echo "	--> use clean.sh to cleanup"
 echo "Done."

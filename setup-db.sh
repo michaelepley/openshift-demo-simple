@@ -2,10 +2,10 @@
 
 # Configuration
 
-. ./config.sh
+. ./config.sh || { echo "FAILED: Could not verify configuration" && exit 1; }
 
 echo "Setup sample PHP + MySQL demo application: database backend"
-. ./setup-login.sh
+. ./setup-login.sh -r OPENSHIFT_USER_RHSADEMO_MEPLEY || { echo "FAILED: Could not login" && exit 1; }
 echo "	--> Create a new application from the mysql-ephemeral template"
 oc get dc/mysql || oc new-app mysql-ephemeral --name=mysql -l app=${OPENSHIFT_APPLICATION_NAME},part=backend -p MYSQL_USER=myphp,MYSQL_PASSWORD=myphp,MYSQL_DATABASE=myphp || { echo "FAILED: Could find or create the application" && exit 1; }
 echo "	--> Verify the application is working normally"

@@ -8,12 +8,14 @@ echo "Setup complex application build environment"
 . ./setup-login.sh -r OPENSHIFT_USER_RHSADEMO_MEPLEY || { echo "FAILED: Could not login" && exit 1; }
 echo "	--> Make sure that jenkins is set up first"
 echo "		--> OCP build pipelines are managed via a jenkins server deployed in the project"
-oc get dc/jenkins || oc process openshift//jenkins-ephemeral -l app=${OPENSHIFT_APPLICATION_NAME},part=cicd JENKINS_PASSWORD=password | oc create -f - || { echo "FAILED: Could not create Jenkins CICD server" && exit 1; }
+# oc get dc/jenkins || oc process openshift//jenkins-ephemeral -l app=${OPENSHIFT_APPLICATION_NAME},part=cicd JENKINS_PASSWORD=password | oc create -f - || { echo "FAILED: Could not create Jenkins CICD server" && exit 1; }
+oc get dc/jenkins || oc process openshift//jenkins-ephemeral -l app=${OPENSHIFT_APPLICATION_NAME},part=cicd | oc create -f - || { echo "FAILED: Could not create Jenkins CICD server" && exit 1; }
 echo "	--> Waiting for jenkins pods to start"
+sleep 2s
 for COUNT in {1..45} ; do curl -s http://jenkins-mepley-myphp.apps.rhsademo.net/login?from=%2F && break; echo -n "." && sleep 1s; done; echo ""
 echo "		--> press enter to continue" && read
 echo "	--> Creating Jenkins build pipeline for the php frontend"
-oc get bc/phppipeline || echo '{ "apiVersion": "v1", "kind": "BuildConfig", "metadata": { "name": "phppipeline", "labels": { "app": "php", "part": "frontend" }, "annotations": { "pipeline.alpha.openshift.io/uses": "[{\"name\": \"php\", \"namespace\": \"\", \"kind\": \"DeploymentConfig\"}]" } }, "spec": { "runPolicy": "Serial", "strategy": { "type": "Source", "jenkinsPipelineStrategy": { "jenkinsfile": "node('\''maven'\'') {\n  stage '\''build'\''\n  openshiftBuild(buildConfig: '\''php'\'', showBuildLogs: '\''true'\'')\nstage '\''deploy'\''\n  openshiftDeploy(deploymentConfig: '\''php'\'')\n  openshiftScale(deploymentConfig: '\''php'\'',replicaCount: '\''2'\'')\n}" } }, "output": {}, "resources": {} } }' | oc create -f - || { echo "FAILED" && exit 1; }
+oc get bc/phppipeline || echo '{ "apiVersion": "v1", "kind": "BuildConfig", "metadata": { "name": "phppipeline", "labels": { "app": "php", "part": "frontend" }, "annotations": { "pipeline.alpha.openshift.io/uses": "[{\"name\": \"php\", \"namespace\": \"\", \"kind\": \"DeploymentConfig\"}]" } }, "spec": { "runPolicy": "Serial", "strategy": { "type": "Source", "jenkinsPipelineStrategy": { "jenkinsfile": "node('\''maven'\'') {\n  stage '\''build'\''\n  openshiftBuild(buildConfig: '\''php'\'', showBuildLogs: '\''true'\'')\nstage '\''deploy'\''\n  openshiftDeploy(deploymentConfig: '\''php'\'')\n  openshiftScale(deploymentConfig: '\''php'\'',replicaCount: '\''2'\'')\n}" } }, "output": {}, "resources": {} } }' | oc create -f - || { echo "FAILED: could not find or create build pipeline definition" && exit 1; }
 
 echo "		--> press enter to continue" && read
 

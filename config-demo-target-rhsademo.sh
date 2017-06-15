@@ -30,3 +30,4 @@ else
 	[[ ! -v OPENSHIFT_USER_PRIMARY_PASSWORD_DEFAULT ]] && echo "Please set OPENSHIFT_USER_PRIMARY_PASSWORD_DEFAULT to your openshift password" && exit 1
 fi
 
+echo "	--> FYI: ssh access to rhsademo available vi jump.rhsademo.net" && echo "	--> Use: ssh -vvv -i ~/.ssh/id_rsa_openshift mepley@jump.rhsademo.net"

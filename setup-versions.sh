@@ -18,8 +18,9 @@ oc rollback php --to-version=$(( `oc get dc/php --template={{.status.latestVersi
 echo "		--> press enter to continue" && read
 echo "	--> Re enable deployment triggers to prevent being locked to rolled back version"
 oc deploy php --enable-triggers
+oc set triggers dc/php --auto
 echo "	--> Creating a new version of the application from a private branch of the app"
-oc get dc/php-mepley || oc new-app php:5.6~https://github.com/michaelepley/phpmysqldemo.git#mepleys --name=php-mepley -l app=${OPENSHIFT_APPLICATION_NAME},part=frontend -e MYSQL_SERVICE_HOST=mysql.${OPENSHIFT_PRIMARY_PROJECT_MYSQLPHP_DEFAULT}.svc.cluster.local,MYSQL_SERVICE_PORT=3306,MYSQL_SERVICE_DATABASE=myphp,MYSQL_SERVICE_USERNAME=myphp,MYSQL_SERVICE_PASSWORD=myphp -o ${OPENSHIFT_OUTPUT_FORMAT_DEFAULT} > ose-app-${OPENSHIFT_APPLICATION_NAME}-php-mepley.${OPENSHIFT_OUTPUT_FORMAT_DEFAULT} || { echo "FAILED: Could find or create the application" && exit 1; }
+oc get dc/php-mepley || oc new-app php:5.6~https://github.com/michaelepley/phpmysqldemo.git#mepleys --name=php-mepley -l app=${OPENSHIFT_APPLICATION_NAME},part=frontend -e MYSQL_SERVICE_HOST=mysql.${OPENSHIFT_PRIMARY_PROJECT_MYSQLPHP_DEFAULT}.svc.cluster.local -e MYSQL_SERVICE_PORT=3306 -e MYSQL_SERVICE_DATABASE=myphp -e MYSQL_SERVICE_USERNAME=myphp -e MYSQL_SERVICE_PASSWORD=myphp -o ${OPENSHIFT_OUTPUT_FORMAT_DEFAULT} > ose-app-${OPENSHIFT_APPLICATION_NAME}-php-mepley.${OPENSHIFT_OUTPUT_FORMAT_DEFAULT} || { echo "FAILED: Could find or create the application" && exit 1; }
 oc create -f ose-app-${OPENSHIFT_APPLICATION_NAME}-php-mepley.${OPENSHIFT_OUTPUT_FORMAT_DEFAULT} 
 oc patch dc/php-mepley -p '{"spec" : { "template" : { "spec" : { "containers" : [ { "name" : "php-mepley", "resources" : { "requests" : { "cpu" : "200m" } } } ] } } } }'
 oc get route php-mepley || oc expose service php-mepley || { echo "FAILED: Could not verify route to application frontend" && exit 1; }

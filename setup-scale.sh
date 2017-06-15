@@ -43,6 +43,7 @@ oc delete pod ${OPENSHIFT_PHP_POD_ORIGINAL}
 echo "		--> press enter to continue" && read
 echo "	--> Set up autoscaling"
 echo "		--> a minimum of 1 pod, a maximum of 5 pods, and scale at 30% capacity"
+oc scale dc/php --replicas=2
 oc autoscale dc/php --min=1 --max=5 --cpu-percent=30
 echo "		--> Found " $(oc get pods -l part=frontend | tail -n +2 | wc -l) " pods are running"
 read -t 1

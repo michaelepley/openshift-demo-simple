@@ -2,10 +2,17 @@
 
 # Configuration
 
-. ./config.sh
+. ./config-demo-openshift-simple.sh || { echo "FAILED: Could not verify configuration" && exit 1; }
 
-echo "Scaling the frontend"
-. ./setup-login.sh
+echo -n "Verifying configuration ready..."
+: ${OPENSHIFT_USER_REFERENCE?}
+: ${OPENSHIFT_APPS?}
+: ${OPENSHIFT_APPLICATION_NAME?}
+: ${OPENSHIFT_PROJECT_PRIMARY_MYSQLPHP?}
+echo "OK"
+
+echo "Setup sample PHP + MySQL demo application: Scaling the frontend"
+. ./setup-login.sh -r OPENSHIFT_USER_REFERENCE -n ${OPENSHIFT_PROJECT_PRIMARY_MYSQLPHP} || { echo "FAILED: Could not login" && exit 1; }
 echo "	--> Scaling frontend of application to 4 instances"
 echo "		--> Set the resource request to a large value"
 oc patch dc/php -p '{"spec" : { "template" : { "spec" : { "containers" : [ { "name" : "php", "resources" : { "limits" : { "cpu" : "1000m" }, "requests" : { "cpu" : "1000m" } } } ] } } } }'
@@ -48,15 +55,15 @@ oc autoscale dc/php --min=1 --max=5 --cpu-percent=30
 echo "		--> Found " $(oc get pods -l part=frontend | tail -n +2 | wc -l) " pods are running"
 read -t 1
 echo "	--> Driving some load"
-echo "		--> Issuing requests to http://php-${OPENSHIFT_PRIMARY_PROJECT_MYSQLPHP_DEFAULT}.${OPENSHIFT_PRIMARY_APPS}/load/primality.php?number=100000 "
-echo "		--> Issuing requests to http://php-${OPENSHIFT_PRIMARY_PROJECT_MYSQLPHP_DEFAULT}.${OPENSHIFT_PRIMARY_APPS}/load/request.php?t=1000 "
+echo "		--> Issuing requests to http://php-${OPENSHIFT_PROJECT_PRIMARY_MYSQLPHP_DEFAULT}.${OPENSHIFT_APPS}/load/primality.php?number=100000 "
+echo "		--> Issuing requests to http://php-${OPENSHIFT_PROJECT_PRIMARY_MYSQLPHP_DEFAULT}.${OPENSHIFT_APPS}/load/request.php?t=1000 "
 echo "		--> Press any key to abort"
 while [ true ] ; do
-	curl -L -s http://php-${OPENSHIFT_PRIMARY_PROJECT_MYSQLPHP_DEFAULT}.${OPENSHIFT_PRIMARY_APPS}/load/primality.php?number=100000 >> /dev/null 2>&1 &
-	curl -L -s http://php-${OPENSHIFT_PRIMARY_PROJECT_MYSQLPHP_DEFAULT}.${OPENSHIFT_PRIMARY_APPS}/load/request.php?t=1000 >> /dev/null 2>&1 &
+	curl -L -s http://php-${OPENSHIFT_PROJECT_PRIMARY_MYSQLPHP_DEFAULT}.${OPENSHIFT_APPS}/load/primality.php?number=100000 >> /dev/null 2>&1 &
+	curl -L -s http://php-${OPENSHIFT_PROJECT_PRIMARY_MYSQLPHP_DEFAULT}.${OPENSHIFT_APPS}/load/request.php?t=1000 >> /dev/null 2>&1 &
 	echo -n "." && read -t 1 -n 1
 	[ $? = 0 ] && break
 done
 
-echo "		--> Found " $(oc get pods -l part=frontend | tail -n +2 | wc -l) " pods are running"
+echo "		--> Found " $(oc get pods -l part=frontend 2>/dev/null | tail -n +2 | wc -l) " pods are running"
 echo "Done"

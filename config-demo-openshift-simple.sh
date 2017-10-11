@@ -5,12 +5,14 @@
 # Note: requires bash 4.2 or later
 
 
-DEMO_TARGET_OPENSHIFT_INSTANCES=(local rhsademo fortnebula itpaas)
+DEMO_TARGET_OPENSHIFT_INSTANCES=(local rhsademo fortnebula itpaas nsabine-vrtx)
 # Target RHSADEMO
-DEMO_TARGET_OPENSHIFT_INSTANCE=${DEMO_TARGET_OPENSHIFT_INSTANCES[3]}
+#DEMO_TARGET_OPENSHIFT_INSTANCE=${DEMO_TARGET_OPENSHIFT_INSTANCES[1]
+#DEMO_TARGET_OPENSHIFT_INSTANCE=${DEMO_TARGET_OPENSHIFT_INSTANCES[3]}}
+DEMO_TARGET_OPENSHIFT_INSTANCE=${DEMO_TARGET_OPENSHIFT_INSTANCES[4]}
 
 # Configuration
-pushd config  >/dev/null 2>&1
+pushd config >/dev/null 2>&1
 . ./config.sh || { echo "FAILED: Could not configure generic demo environment" && exit 1 ; }
 # we will be using github for this demo, so load these configuration resources 
 . ./config-resources-github.sh || { echo "FAILED: Could not configure github demo resources" && exit 1 ; }
@@ -18,7 +20,8 @@ popd >/dev/null 2>&1
 
 [[ -v CONFIGURATION_DEMO_OPENSHIFT_SIMPLE_COMPLETED ]] && echo "Using openshift simple demo configuration" && { return || exit ; }
 : ${CONFIGURATION_DEMO_OPENSHIFT_SIMPLE_DISPLAY:=$CONFIGURATION_DISPLAY}
-CONFIGURATION_DEMO_OPENSHIFT_SIMPLE_DISPLAY=true
+# uncomment to force these scripts to display coniguration information
+# CONFIGURATION_DEMO_OPENSHIFT_SIMPLE_DISPLAY=true
 
 # Demo specific configuration items
 # modify the user, or copy to new reference, then modufy

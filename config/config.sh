@@ -4,12 +4,18 @@
 
 [[ -v CONFIGURATION_COMPLETED ]] && echo "Using preloaded configuration" && { return || exit ; }
 
-OPENSHIFT_PRIMARY_AUTH_METHODS=(password kerberos token cert)
+OPENSHIFT_PRIMARY_AUTH_METHODS=(password kerberos token cert github giventoken)
 OPENSHIFT_OUTPUT_FORMATS=(json yaml)
 
 : ${DEMO_TARGET_OPENSHIFT_INSTANCES:=(local rhsademo fortnebula itpaas)}
 # Target RHSADEMO
 : ${DEMO_TARGET_OPENSHIFT_INSTANCE:=${DEMO_TARGET_OPENSHIFT_INSTANCES[1]}}
+
+: ${OPENSHIFT_PRIMARY_AUTH_METHODS?"Missing configuration for available auth methods"}
+: ${OPENSHIFT_OUTPUT_FORMATS?"Missing configuration for available output formats"}
+: ${DEMO_TARGET_OPENSHIFT_INSTANCES?"Missing configuration for available demo target"}
+: ${DEMO_TARGET_OPENSHIFT_INSTANCE?"Missing configuration for designated demo target"}
+
 
 CONFIGURATION_DEMO_TARGET_SCRIPT=config-demo-target-${DEMO_TARGET_OPENSHIFT_INSTANCE}.sh
 . ${CONFIGURATION_DEMO_TARGET_SCRIPT} || { echo "FAILED: Could not run demo target configuration script ${CONFIGURATION_DEMO_TARGET_SCRIPT}" && exit 1 ; }

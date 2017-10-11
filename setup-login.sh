@@ -2,7 +2,9 @@
 
 # Configuration
 
-{ [[ -v CONFIGURATION_COMPLETED ]] && echo "Using preloaded configuration"; } || . ./config.sh || { echo "FAILED: Could not verify configuration" && exit 1; }
+. ./config-demo-openshift-simple.sh || { echo "FAILED: Could not verify configuration" && exit 1; }
+
+echo -n "Verifying configuration ready..."
 
 : ${CONFIGURATION_SETUP_LOGIN_DISPLAY:=$CONFIGURATION_DISPLAY}
 CONFIGURATION_SETUP_LOGIN_DISPLAY=true
@@ -53,7 +55,7 @@ fi
 SCRIPT_COMMANDLINE_OPTIONS=`getopt -o d:u:p:r:a:x:m:n: --long domain:,username:,password:,reference:,auth-method:,auth-proxy:,master:,namespace: -n 'setup-login.sh' -- "$@"`
 eval set -- "$SCRIPT_COMMANDLINE_OPTIONS"
 
-
+set +x
 
 # extract options and their arguments into variables.
 while true ; do
@@ -122,10 +124,10 @@ echo -n "Verifying configuration ready..."
 : ${SCRIPT_ARG_USERNAME?}
 : ${SCRIPT_ARG_PASSWORD?}
 : ${SCRIPT_ARG_PROJECT?}
-: ${SCRIPT_ARG_AUTH_METHOD}
-: ${SCRIPT_ARG_AUTH_PROXY}
-: ${SCRIPT_ARG_MASTER}
-: ${SCRIPT_ARG_MASTER_PORT_HTTPS}
+: ${SCRIPT_ARG_AUTH_METHOD?}
+: ${SCRIPT_ARG_AUTH_PROXY?}
+: ${SCRIPT_ARG_MASTER?}
+: ${SCRIPT_ARG_MASTER_PORT_HTTPS?}
 echo "OK"
 
 oc whoami >/dev/null 2>&1 || echo "not Logged in"
@@ -159,6 +161,22 @@ else
 			# certificate auth
 			echo "	--> Configuring for ${OPENSHIFT_PRIMARY_AUTH_METHODS[3]} authentication"
 			echo "FAILED: cert auth not currently supported" && exit 1
+		;;
+		${OPENSHIFT_PRIMARY_AUTH_METHODS[4]} )
+			# github auth
+			echo "	--> Configuring for ${OPENSHIFT_PRIMARY_AUTH_METHODS[4]} authentication"
+			TMP_LOGIN_COOKIES=$(mktemp)
+			{ [[ -v OPENSHIFT_USER_PRIMARY_TOKEN ]] || [[ -z ${OPENSHIFT_USER_PRIMARY_TOKEN} ]] ; } && { echo "	--> attempt to obtain the oauth authorization token from ${SCRIPT_ARG_AUTH_PROXY} automatically for user ${SCRIPT_ARG_USERNAME}" && OPENSHIFT_USER_PRIMARY_TOKEN=$(curl -u "${SCRIPT_ARG_USERNAME}":"${SCRIPT_ARG_PASSWORD}" -kv -L --cookie ${TMP_LOGIN_COOKIES} -H "X-CSRF-Token:xxx" "https://${SCRIPT_ARG_AUTH_PROXY}/oauth/authorize?client_id=openshift-web-console&idp=github_auth&response_type=token" 2>&1 | sed -e '\|access_token|!d;s/.*access_token=\([-_[:alnum:]]*\).*/\1/') && echo "		-> token is ${OPENSHIFT_USER_PRIMARY_TOKEN}" ; }  
+			{ [[ -v OPENSHIFT_USER_PRIMARY_TOKEN ]] && [[ -n ${OPENSHIFT_USER_PRIMARY_TOKEN} ]] ; } || { echo "Please set OPENSHIFT_USER_PRIMARY_TOKEN to your openshift login token" && exit 1; }
+			OPENSHIFT_PRIMARY_CEREDENTIALS_CLI_DEFAULT="--token ${OPENSHIFT_USER_PRIMARY_TOKEN}"
+			OPENSHIFT_PRIMARY_CEREDENTIALS_CLI=${OPENSHIFT_PRIMARY_CEREDENTIALS_CLI_DEFAULT}
+		;;
+		${OPENSHIFT_PRIMARY_AUTH_METHODS[5]} )
+			# given token auth -- 
+			echo "	--> Configuring for ${OPENSHIFT_PRIMARY_AUTH_METHODS[5]} authentication"
+			: ${OPENSHIFT_USER_PRIMARY_TOKEN?"Must set OPENSHIFT_USER_PRIMARY_TOKEN to use ${OPENSHIFT_PRIMARY_AUTH_METHODS[5]}"}
+			OPENSHIFT_PRIMARY_CEREDENTIALS_CLI_DEFAULT="--token ${OPENSHIFT_USER_PRIMARY_TOKEN}"
+			OPENSHIFT_PRIMARY_CEREDENTIALS_CLI=${OPENSHIFT_PRIMARY_CEREDENTIALS_CLI_DEFAULT}
 		;;
 		*)
 			echo "FAILED: unknown authentication method ${SCRIPT_ARG_AUTH_METHOD} selected" && exit 1

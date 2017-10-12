@@ -20,8 +20,8 @@ GITHUB_AUTHORIZATION_ROLES_REQUIRED=(none)
 
 [[ -v GITHUB_AUTHORIZATION_TOKEN_OPENSHIFT_DEMO_PLAINTEXT ]] || [[ -v GITHUB_AUTHORIZATION_TOKEN_OPENSHIFT_DEMO_CIPHERTEXT ]] || { echo "FAILED: GITHUB_AUTHORIZATION_TOKEN_OPENSHIFT_DEMO_PLAINTEXT must be set and match a valid GitHub.com Oauth2 personal access token with the following roles:" ; }
 #GITHUB_AUTHORIZATION_TOKEN_OPENSHIFT_DEMO_PLAINTEXT=`echo ${GITHUB_AUTHORIZATION_TOKEN_OPENSHIFT_DEMO_CIPHERTEXT} | openssl enc -d -a | openssl enc -d -aes-256-cbc -k ${SCRIPT_ENCRYPTION_KEY} `
-[[ -v GITHUB_AUTHORIZATION_TOKEN_OPENSHIFT_DEMO_PLAINTEXT ]] && echo "--> it is recommended to use an encrypted token; you may encrypt and store the token using the following: " && echo ' GITHUB_AUTHORIZATION_TOKEN_OPENSHIFT_DEMO_CIPHERTEXT=`echo ${GITHUB_AUTHORIZATION_TOKEN_OPENSHIFT_DEMO_PLAINTEXT} | openssl enc -e -aes-256-cbc -k ${SCRIPT_ENCRYPTION_KEY} | openssl enc -e -a`'
-: ${GITHUB_AUTHORIZATION_TOKEN_OPENSHIFT_DEMO_PLAINTEXT:-`echo ${GITHUB_AUTHORIZATION_TOKEN_OPENSHIFT_DEMO_CIPHERTEXT} | openssl enc -d -a | openssl enc -d -aes-256-cbc -k ${SCRIPT_ENCRYPTION_KEY}`} || { echo "FAILED: Could not validate the github token" && exit 1; }
+[[ -v GITHUB_AUTHORIZATION_TOKEN_OPENSHIFT_DEMO_PLAINTEXT ]] && ! [[ -v GITHUB_AUTHORIZATION_TOKEN_OPENSHIFT_DEMO_CIPHERTEXT ]] && echo "--> it is recommended to use an encrypted token; you may encrypt and store the token using the following: " && echo ' GITHUB_AUTHORIZATION_TOKEN_OPENSHIFT_DEMO_CIPHERTEXT=`echo ${GITHUB_AUTHORIZATION_TOKEN_OPENSHIFT_DEMO_PLAINTEXT} | openssl enc -e -aes-256-cbc -k ${SCRIPT_ENCRYPTION_KEY} | openssl enc -e -a`'
+[[ -v GITHUB_AUTHORIZATION_TOKEN_OPENSHIFT_DEMO_CIPHERTEXT ]] && : ${GITHUB_AUTHORIZATION_TOKEN_OPENSHIFT_DEMO_PLAINTEXT:-`echo ${GITHUB_AUTHORIZATION_TOKEN_OPENSHIFT_DEMO_CIPHERTEXT} | openssl enc -d -a | openssl enc -d -aes-256-cbc -k ${SCRIPT_ENCRYPTION_KEY}`} || { echo "FAILED: Could not validate the github token" && exit 1; }
 
 echo -n "	--> Verify access to github.com..."
 ping -W 1 -c 2 api.github.com >>/dev/null 2>&1 || { echo "FAILED: Could not access github.com, check your network connection" && exit 1; }

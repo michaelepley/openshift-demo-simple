@@ -7,7 +7,7 @@
 echo -n "Verifying configuration ready..."
 
 : ${CONFIGURATION_SETUP_LOGIN_DISPLAY:=$CONFIGURATION_DISPLAY}
-CONFIGURATION_SETUP_LOGIN_DISPLAY=true
+#CONFIGURATION_SETUP_LOGIN_DISPLAY=true
 
 echo "Just logs in"
 echo "	--> checking input parameters"

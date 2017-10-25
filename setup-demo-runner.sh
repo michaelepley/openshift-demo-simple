@@ -40,19 +40,22 @@ APPLICATION_DEMO_RUNNER_PLATFORM=FEDORA
 APPLICATION_DEMO_RUNNER_DOCKER_BASE_IMAGE_RHEL=${OPENSHIFT_PROJECT_PRIMARY_MYSQLPHP}/rhel:7
 APPLICATION_DEMO_RUNNER_DOCKER_BASE_IMAGE_FEDORA=${OPENSHIFT_PROJECT_PRIMARY_MYSQLPHP}/fedora:26
 
-APPLICATION_DEMO_RUNNER_DOCKER_DOCKERFILE_RHEL=$'FROM rhel\nRUN yum clean all && yum-config-manager --enable rhel-7-server-rpms rhel-7-server-ose-3.6-rpms && yum repolist && yum install -y openssl iputil && {  yum install -y  origin-clients ||  yum install -y --enablerepo=rhel-7-server-ose-3.6-rpms atomic-openshift-clients ; }\nADD . /demo/\nRUN chmod -R g+w /demo'
+APPLICATION_DEMO_RUNNER_DOCKER_DOCKERFILE_RHEL=$'FROM rhel\nRUN yum clean all && yum-config-manager --enable rhel-7-server-rpms rhel-7-server-ose-3.6-rpms && yum repolist && yum install -y openssl iputil && {  yum install -y  origin-clients ||  yum install -y --enablerepo=rhel-7-server-ose-3.6-rpms atomic-openshift-clients ; }\nADD . /demo/\nRUN chmod -R g+w /demo\nENV KUBECONFIG=/demo/.kubeconfig'
 #### including additional repos: FROM rhel\nRUN yum clean all && yum-config-manager --disable \* && yum-config-manager --enable rhel-7-server-rpms rhel-server-rhscl-7-rpms rhel-7-server-extras-rpms rhel-7-server-supplementary-rpms rhel-7-server-optional-rpms && yum install -y openssl ping && {  yum install -y  origin-clients ||  yum install -y atomic-openshift-clients } \nADD . /demo/
-APPLICATION_DEMO_RUNNER_DOCKER_DOCKERFILE_FEDORA=$'FROM fedora:26\nRUN dnf clean all && dnf install -y openssl iputils origin-clients\nADD . /demo/\nRUN chmod -R g+w /demo'
+APPLICATION_DEMO_RUNNER_DOCKER_DOCKERFILE_FEDORA=$'FROM fedora:26\nRUN dnf clean all && dnf install -y openssl iputils origin-clients\nADD . /demo/\nRUN chmod -R g+w /demo\nENV KUBECONFIG=/demo/.kubeconfig'
 APPLICATION_DEMO_RUNNER_DOCKER_BASE=${APPLICATION_DEMO_RUNNER_DOCKER_BASE_IMAGE_FEDORA}
+APPLICATION_DEMO_RUNNER_DOCKER_BASE=php:5.6
 APPLICATION_DEMO_RUNNER_DOCKERFILE=${APPLICATION_DEMO_RUNNER_DOCKER_DOCKERFILE_FEDORA}
 
 echo "	--> Creating new build for demo runner"
 oc new-build --name=demo-runner --image-stream=${APPLICATION_DEMO_RUNNER_DOCKER_BASE} --code=https://github.com/michaelepley/openshift-demo-simple.git --strategy=docker --dockerfile="${APPLICATION_DEMO_RUNNER_DOCKERFILE}" -l app=demo-runner,name=demo-runner || { echo "FAILED: could not create demo runner" && exit 1; } 
 echo "	--> waiting for build to succeed, press any key to cancel"
 while [ ! "`oc get build -l buildconfig=demo-runner --template='{{range .items}}{{if (eq .metadata.name "demo-runner-1")}}{{.status.phase}}{{end}}{{end}}'`" == "Complete" ] ; do echo -n "." && { read -t 1 -n 1 && break ; } && sleep 1s; done; echo ""
-oc new-app --name=demo-runner --image-stream=demo-runner -e USER=${USER}-e OPENSHIFT_RHSADEMO_USER_PASSWORD_DEFAULT_CIPHERTEXT="${OPENSHIFT_RHSADEMO_USER_PASSWORD_DEFAULT_CIPHERTEXT}" -e SCRIPT_ENCRYPTION_KEY="${SCRIPT_ENCRYPTION_KEY}" -e GITHUB_AUTHORIZATION_TOKEN_OPENSHIFT_DEMO_CIPHERTEXT="${GITHUB_AUTHORIZATION_TOKEN_OPENSHIFT_DEMO_CIPHERTEXT}"
-
-oc patch dc/demo-runner -p '{"spec": {"template": {"spec": {"containers":[{"name":"demo-runner", "command": ["/bin/sleep", "infinity"]}]}}}}'
-
+oc new-app --name=demo-runner --image-stream=demo-runner -e USER=${USER} -e OPENSHIFT_RHSADEMO_USER_PASSWORD_DEFAULT_CIPHERTEXT="${OPENSHIFT_RHSADEMO_USER_PASSWORD_DEFAULT_CIPHERTEXT}" -e SCRIPT_ENCRYPTION_KEY="${SCRIPT_ENCRYPTION_KEY}" -e GITHUB_AUTHORIZATION_TOKEN_OPENSHIFT_DEMO_CIPHERTEXT="${GITHUB_AUTHORIZATION_TOKEN_OPENSHIFT_DEMO_CIPHERTEXT}"
+oc get dc/demo-runner && {
+oc deploy frontend --cancel
+&& oc patch dc/demo-runner -p '{"spec": {"template": {"spec": {"containers":[{"name":"demo-runner", "command": ["/bin/sleep", "infinity"]}]}}}}'
+&& oc deploy dc/demo-runner;
+} || { echo "FAILED: could update demo runner" && exit 1; } 
 
 echo "Done."

@@ -52,31 +52,35 @@ while ! oc get pods | grep blue | grep Running ; do echo -n "." && { read -t 1 -
 while ! oc get pods | grep green | grep Running ; do echo -n "." && { read -t 1 -n 1 && break ; } && sleep 1s; done; echo ""
 
 echo "	--> open web page at ${APPLICATION_SERVICE_V1_NAME}-${OPENSHIFT_PROJECT_PRIMARY_MYSQLPHP}.${OPENSHIFT_APPS}"
-firefox ${APPLICATION_SERVICE_V1_NAME}-${OPENSHIFT_PROJECT_PRIMARY_MYSQLPHP}.${OPENSHIFT_APPS}
+[ "x${DEMO_INTERACTIVE}" != "xfalse" ] && firefox ${APPLICATION_SERVICE_V1_NAME}-${OPENSHIFT_PROJECT_PRIMARY_MYSQLPHP}.${OPENSHIFT_APPS}
 
-echo "		--> press enter to continue" && read
+[ "x${DEMO_INTERACTIVE}" != "xfalse" ] && echo "		--> press enter to continue" && read
+
 echo "	--> create new endpoint at visitors.${OPENSHIFT_APPS}"
 oc get route visitors || oc expose service ${APPLICATION_SERVICE_V1_NAME} --name visitors -l app=${OPENSHIFT_APPLICATION_NAME} --hostname="visitors.${OPENSHIFT_APPS}"
-firefox visitors.${OPENSHIFT_APPS}
-echo "		--> press enter to continue" && read
+[ "x${DEMO_INTERACTIVE}" != "xfalse" ] && firefox visitors.${OPENSHIFT_APPS}
+[ "x${DEMO_INTERACTIVE}" != "xfalse" ] && echo "		--> press enter to continue" && read
+
 echo "	--> move old endpoint - php-${OPENSHIFT_PROJECT_PRIMARY_MYSQLPHP}.${OPENSHIFT_APPS} - to new endpoint"
 oc patch route/php -p '{"spec" : { "to" : { "name" : "'${APPLICATION_SERVICE_V1_NAME}'"} } }'
-firefox php-${OPENSHIFT_PROJECT_PRIMARY_MYSQLPHP}.${OPENSHIFT_APPS}
-echo "		--> press enter to continue" && read
+[ "x${DEMO_INTERACTIVE}" != "xfalse" ] && firefox php-${OPENSHIFT_PROJECT_PRIMARY_MYSQLPHP}.${OPENSHIFT_APPS}
+[ "x${DEMO_INTERACTIVE}" != "xfalse" ] &&echo "		--> press enter to continue" && read
+
 echo "	--> create new a/b testing endpoint at visitorsab.${OPENSHIFT_APPS}"
 oc patch route/php -p '{"spec" : { "to" : { "name" : "php"} } }'
 #--session-affinity=None 
 oc get route visitorsab || oc expose service ${APPLICATION_SERVICE_V1_NAME} --name visitorsab -l app=${OPENSHIFT_APPLICATION_NAME} --hostname="visitorsab.${OPENSHIFT_APPS}"
-firefox visitorsab.${OPENSHIFT_APPS}
-echo "		--> press enter to continue" && read
+[ "x${DEMO_INTERACTIVE}" != "xfalse" ] && firefox visitorsab.${OPENSHIFT_APPS}
+[ "x${DEMO_INTERACTIVE}" != "xfalse" ] && echo "		--> press enter to continue" && read
+
 echo "		--> Set the AB endpoint to allow a small amount of traffic to be routed to the 'new' application"
 oc set route-backends visitorsab php=90 ${APPLICATION_SERVICE_V1_NAME}=10
 for COUNT in {1..20} ; do curl -L -s http://visitorsab.${OPENSHIFT_APPS} | grep -o "bgcolor" || echo "nocolor"; done
-echo "			--> notice the small amount of bgcolor application hits" && read
+[ "x${DEMO_INTERACTIVE}" != "xfalse" ] && echo "			--> notice the small amount of bgcolor application hits" && read
 echo "		--> Set the AB endpoint to route traffic equally between applications"
 oc set route-backends visitorsab php=50 ${APPLICATION_SERVICE_V1_NAME}=50
 for COUNT in {1..20} ; do curl -L -s http://visitorsab.${OPENSHIFT_APPS} | grep -o "bgcolor" || echo "nocolor"; done
-echo "			--> notice the equal number of hits for bgcolor and nocolor" && read
+[ "x${DEMO_INTERACTIVE}" != "xfalse" ] && echo "			--> notice the equal number of hits for bgcolor and nocolor" && read
 echo "		--> Set the AB endpoint to route traffic  mostly to the new application"
 oc set route-backends visitorsab php=10 ${APPLICATION_SERVICE_V1_NAME}=90
 for COUNT in {1..20} ; do curl -L -s http://visitorsab.${OPENSHIFT_APPS} | grep -o "bgcolor" || echo "nocolor"; done

@@ -40,6 +40,6 @@ echo "	--> Waiting for the ${OPENSHIFT_APPLICATION_FRONTEND_NAME} application to
 while ! oc get pods | grep php | grep -v build | grep Running ; do echo -n "." && { read -t 1 -n 1 && break ; } && sleep 1s; done; echo ""
 
 echo "	--> open web page"
-firefox php-${OPENSHIFT_PROJECT_PRIMARY_MYSQLPHP}.${OPENSHIFT_APPS}
+[ "x${DEMO_INTERACTIVE}" != "xfalse" ] && firefox php-${OPENSHIFT_PROJECT_PRIMARY_MYSQLPHP}.${OPENSHIFT_APPS}
 
 echo "Done."

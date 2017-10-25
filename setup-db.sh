@@ -19,6 +19,9 @@ oc get dc/mysql || oc new-app mysql-ephemeral --name=mysql -l app=${OPENSHIFT_AP
 echo "	--> and for convenience, lets group it with the original php service"
 oc get svc/php && oc patch svc/php -p '{"metadata" : { "annotations" : { "service.alpha.openshift.io/dependencies" : "[ { \"name\" : \"mysql\" , \"kind\" : \"Service\"  } ]" } } }' || { echo "FAILED: Could not patch app=${OPENSHIFT_APPLICATION_NAME},part=backend" && exit 1; }
 
+echo "	--> Waiting for the mysql application to start....press any key to proceed"
+while ! oc get pods | grep mysql | grep -v build | grep Running ; do echo -n "." && { read -t 1 -n 1 && break ; } && sleep 1s; done; echo ""
+
 echo "	--> Verify the database automatically"
 ## OPENSHIFT_APPLICATION_MYSQL_PODS=`oc get pods -o jsonpath='{.items[*].metadata.name}' | grep -o '\bmysql[-a-zA-Z0-9]*\b'`
 oc rsh dc/mysql /bin/sh -c 'echo -e "show tables;\nselect * from visitors;\n quit\n" | /opt/rh/rh-mysql57/root/usr/bin/mysql -h 127.0.0.1 -u myphp -P 3306 -D myphp -p myphp'

@@ -93,7 +93,7 @@ OPENSHIFT_PROJECT_PRIMARY_VAULT_DEFAULT
 
 GITHUB_USERS=(michaelepley)
 
-if [ "$CONFIGURATION_DISPLAY" != "false" ]; then
+if [ "$CONFIGURATION_RESOURCES_AVAILABLE_ALL_DISPLAY" != "false" ]; then
 	echo "Resources Available Configuration___________________________"
 	echo "	OPENSHIFT_PROJECTS_DEFAULT = {"
 	for OPENSHIFT_PROJECT_DEFAULT in ${!OPENSHIFT_PROJECTS_DEFAULT[@]}; do
